@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>EmoTune - AI Music Therapist</title>
+
+```
+<style>
+
+    body{
+        margin:0;
+        font-family:Arial;
+        background:linear-gradient(to right,#1e3c72,#2a5298);
+    }
+
+    .container{
+        width:450px;
+        margin:20px auto;
+        background:white;
+        padding:30px;
+        border-radius:20px;
+        text-align:center;
+    }
+
+    h1{
+        color:#1e3c72;
+    }
+
+    button{
+        background:#1e3c72;
+        color:white;
+        border:none;
+        padding:12px 20px;
+        border-radius:10px;
+        cursor:pointer;
+        margin-top:10px;
+    }
+
+    img{
+        width:300px;
+        border-radius:15px;
+        margin-top:15px;
+    }
+
+    video{
+        width:300px;
+        border-radius:15px;
+        margin-top:15px;
+    }
+
+    audio{
+        width:100%;
+        margin-top:10px;
+    }
+
+</style>
+```
+
+</head>
+
+<body>
+
+<div class="container">
+
+```
+<h1>🎵 EmoTune - AI Music Therapist</h1>
+
+<form method="POST" enctype="multipart/form-data">
+
+    <h3>📁 Upload Existing Photo</h3>
+    <input type="file" name="image" accept="image/*">
+
+    <br><br>
+
+    <h3>🎤 Upload Existing Audio</h3>
+    <input type="file" name="audio" accept="audio/*">
+
+    <br><br>
+
+    <h3>📷 Live Webcam</h3>
+
+    <video id="video" autoplay playsinline></video>
+
+    <br>
+
+    <button type="button" onclick="capturePhoto()">
+        📸 Click Photo
+    </button>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <input type="hidden"
+           name="captured_image"
+           id="captured_image">
+
+    <br><br>
+
+    <h3>🎙 Speech Emotion</h3>
+
+    <button type="button"
+            onclick="startRecording()">
+
+        🎤 Record Voice (7 Seconds)
+
+    </button>
+
+    <br><br>
+
+    <audio id="audioPlayback"
+           controls></audio>
+
+    <br><br>
+
+    <button type="submit">
+        😺 Detect Emotion
+    </button>
+
+</form>
+
+{% if prediction %}
+
+    <hr>
+
+    <h2>Emotion: {{ prediction }}</h2>
+
+    {% if image_path %}
+        <img src="{{ image_path }}">
+    {% endif %}
+
+    {% if song %}
+
+        <h2>🎵 Recommended Song</h2>
+
+        <p>{{ song }}</p>
+
+        <audio controls autoplay>
+            <source src="{{ url_for('songs', filename=song) }}"
+                    type="audio/mpeg">
+        </audio>
+
+    {% endif %}
+
+{% endif %}
+```
+
+</div>
+
+<script>
+
+const video =
+document.getElementById("video");
+
+navigator.mediaDevices.getUserMedia({
+    video:true
+})
+.then(function(stream){
+    video.srcObject = stream;
+});
+
+function capturePhoto(){
+
+    let canvas =
+    document.getElementById("canvas");
+
+    canvas.width = 320;
+    canvas.height = 240;
+
+    let ctx =
+    canvas.getContext("2d");
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        320,
+        240
+    );
+
+    let image =
+    canvas.toDataURL(
+        "image/jpeg",
+        0.3
+    );
+
+    document.getElementById(
+        "captured_image"
+    ).value = image;
+
+    alert("Photo Captured ✅");
+}
+
+let mediaRecorder;
+let audioChunks = [];
+
+async function startRecording(){
+
+    const stream =
+    await navigator.mediaDevices.getUserMedia({
+        audio:true
+    });
+
+    mediaRecorder =
+    new MediaRecorder(stream);
+
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable =
+    e=>{
+        audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = ()=>{
+
+        const blob =
+        new Blob(audioChunks);
+
+        const url =
+        URL.createObjectURL(blob);
+
+        document.getElementById(
+            "audioPlayback"
+        ).src = url;
+
+        alert("Voice Recorded ✅");
+    };
+
+    mediaRecorder.start();
+
+    setTimeout(()=>{
+        mediaRecorder.stop();
+    },7000);
+}
+
+</script>
+
+</body>
+</html>
